@@ -1,10 +1,8 @@
 /**
  * dashboard-api / server.js
  *
- * Minimaler HTTP-Server der den Docker-Unix-Socket abfragt
- * und laufende Container als JSON zurückgibt.
- *
- * Keine externen npm-Abhängigkeiten — nur Node.js built-ins.
+ * Minimal HTTP server: queries the Docker Unix socket and returns running containers as JSON.
+ * No extra npm deps — Node.js built-ins only.
  *
  * GET /api/containers  →  { containers: [...], ts: <epoch ms> }
  * GET /health          →  { ok: true }
@@ -19,7 +17,7 @@ const PORT        = Number(process.env.PORT)        || 2999;
 const DOCKER_SOCK = process.env.DOCKER_SOCK         || '/var/run/docker.sock';
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS   || '*').split(',');
 
-// Komma-getrennte Liste: "name|healthUrl,name2|healthUrl2"
+// Comma-separated list: "name|healthUrl,name2|healthUrl2"
 const EXTRA_SERVICES_RAW = process.env.EXTRA_SERVICES || '';
 const EXTRA_SERVICES = EXTRA_SERVICES_RAW
   .split(',')
@@ -82,7 +80,7 @@ function dockerGet(path) {
       const headerEnd = raw.indexOf('\r\n\r\n');
       const rawBody   = headerEnd >= 0 ? raw.slice(headerEnd + 4) : raw;
 
-      // Chunked encoding erkennen
+      // Detect chunked encoding
       const headers    = raw.slice(0, headerEnd).toLowerCase();
       const isChunked  = headers.includes('transfer-encoding: chunked');
       const body       = isChunked ? decodeChunked(rawBody) : rawBody;
@@ -90,13 +88,13 @@ function dockerGet(path) {
       try {
         resolve(JSON.parse(body));
       } catch (e) {
-        reject(new Error('Docker-API: ungültiges JSON — ' + body.slice(0, 300)));
+        reject(new Error('Docker API: invalid JSON — ' + body.slice(0, 300)));
       }
     });
 
     socket.on('timeout', () => {
       socket.destroy();
-      reject(new Error('Docker-Socket Timeout'));
+      reject(new Error('Docker socket timeout'));
     });
 
     socket.on('error', reject);
@@ -159,7 +157,7 @@ const server = http.createServer(async (req, res) => {
           .filter((v, i, a) => a.indexOf(v) === i),
       }));
 
-      // Extra-Services via HTTP-Health-Check ergänzen
+      // Append extra services via HTTP health checks
       if (EXTRA_SERVICES.length > 0) {
         const checks = await Promise.all(
           EXTRA_SERVICES.map(async ({ name, url: healthUrl }) => ({

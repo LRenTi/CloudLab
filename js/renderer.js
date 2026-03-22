@@ -4,7 +4,7 @@
  * the full page DOM — hero, cards, quicklinks, footer.
  */
 
-/* ── Status label map ── */
+/* ── Status label map (UI language: English) ── */
 const STATUS_LABEL = {
   online:  'Online',
   idle:    'Idle',
@@ -25,17 +25,17 @@ function renderHero(hero) {
       <div class="stat-group">
         <div class="stat-pill">
           <span class="stat-dot dot-green"></span>
-          Dienste
-          <span class="stat-val" id="stat-online-count">— lädt …</span>
+          Services
+          <span class="stat-val" id="stat-online-count">— loading…</span>
         </div>
         <div class="stat-pill">
           <span class="stat-dot dot-blue"></span>
           Docker
-          <span class="stat-val" id="stat-docker-count">— lädt …</span>
+          <span class="stat-val" id="stat-docker-count">— loading…</span>
         </div>
         <div class="stat-pill">
           <span class="stat-dot dot-yellow"></span>
-          Lokales Netz
+          Local network
           <span class="stat-val">${escHtml(hero.network)}</span>
         </div>
       </div>
@@ -113,7 +113,7 @@ function renderQuickSection(section) {
 
 /* ── Render footer ── */
 function renderFooter(footer) {
-  const dateStr = new Date().toLocaleDateString('de-DE', {
+  const dateStr = new Date().toLocaleDateString('en-GB', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 

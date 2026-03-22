@@ -31,18 +31,111 @@ function toggleTheme() {
 function updateClock() {
   const el = document.getElementById('clock');
   if (!el) return;
-  el.textContent = new Date().toLocaleTimeString('de-DE', {
+  el.textContent = new Date().toLocaleTimeString('en-GB', {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
 }
 updateClock();
 setInterval(updateClock, 1000);
 
+/* ── Authelia: login status + sign in from dashboard ─ */
+const AUTH_PREFIX = '/auth';
+const AUTH_POLL_MS = 45_000;
+
+function authReturnUrl() {
+  return encodeURIComponent(`${window.location.origin}/`);
+}
+
+function authLoginHref() {
+  return `${AUTH_PREFIX}/?rd=${authReturnUrl()}&rm=GET`;
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function refreshLucideIcons() {
+  if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+}
+
+document.addEventListener('click', async (e) => {
+  const link = e.target.closest('a.auth-logout-btn');
+  if (!link) return;
+  e.preventDefault();
+  try {
+    await fetch(`${AUTH_PREFIX}/api/logout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+  } catch (_) { /* ignore */ }
+  window.location.reload();
+});
+
+async function refreshAuthStatus() {
+  const el = document.getElementById('authStatus');
+  if (!el) return;
+
+  try {
+    const res = await fetch(`${AUTH_PREFIX}/api/state`, {
+      credentials: 'include',
+      signal: AbortSignal.timeout(10000),
+    });
+
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+      throw new Error('not-json');
+    }
+
+    const json = await res.json();
+    const data = json?.data ?? {};
+    const user = typeof data.username === 'string' ? data.username.trim() : '';
+    const level = Number(data.authentication_level ?? 0);
+
+    // two_factor policy: level 2 = fully signed in (incl. TOTP)
+    if (user && level >= 2) {
+      el.innerHTML = `
+        <span class="auth-user" title="Signed in with Authelia (2FA)">
+          <i data-lucide="shield-check"></i>
+          <span class="auth-user-name">${escapeHtml(user)}</span>
+        </span>
+        <a class="btn-auth-link auth-logout-btn" href="#" title="Sign out">Sign out</a>
+      `;
+    } else if (user && level === 1) {
+      el.innerHTML = `
+        <a class="btn-auth-warn" href="${authLoginHref()}" title="Complete second factor (TOTP)">
+          <i data-lucide="shield-alert"></i>
+          Finish 2FA
+        </a>
+      `;
+    } else {
+      el.innerHTML = `
+        <a class="btn-auth-login" href="${authLoginHref()}" title="Sign in — then service links work without asking again">
+          <i data-lucide="log-in"></i>
+          Sign in
+        </a>
+      `;
+    }
+    refreshLucideIcons();
+  } catch {
+    el.innerHTML = `
+      <a class="btn-auth-login" href="${authLoginHref()}" title="Sign in">
+        <i data-lucide="log-in"></i>
+        Sign in
+      </a>
+    `;
+    refreshLucideIcons();
+  }
+}
+
 /* ── Docker Status Polling ──────────────────────── */
 
-const DOCKER_POLL_INTERVAL = 30_000; // 30 Sekunden
+const DOCKER_POLL_INTERVAL = 30_000; // 30 seconds
 
-// API-URL: relativer Pfad → kein Mixed-Content, kein Port-Problem
+// API URL: relative path → no mixed content / port issues
 function getDockerApiUrl() {
   if (DASHBOARD_CONFIG.api?.dockerUrl) return DASHBOARD_CONFIG.api.dockerUrl;
   return '/api/containers';
@@ -62,7 +155,7 @@ function updateCardStatus(card, status) {
 
   card.classList.toggle('card--offline', status === 'offline');
 
-  // Offline-Karten nicht anklickbar; Online-Karten wieder freischalten
+  // Offline cards not clickable; re-enable when online
   if (status === 'offline') {
     card.setAttribute('tabindex', '-1');
     card.setAttribute('aria-disabled', 'true');
@@ -80,16 +173,15 @@ async function fetchDockerStatus() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { containers } = await res.json();
 
-    // Liste laufender Container-Namen (lowercase)
     const runningNames = containers.map(c => c.name.toLowerCase());
 
-    // Prüft ob ein konfigurierter Container-Name läuft (exakt oder als Präfix)
+    // Whether configured container name is running (exact or prefix)
     function isRunning(configuredName) {
       const n = configuredName.toLowerCase();
       return runningNames.some(r => r === n || r.startsWith(n + '-') || r.startsWith(n + '_'));
     }
 
-    // Service-Cards aktualisieren
+    // Update service cards
     let onlineCount = 0;
     const cards = document.querySelectorAll('.service-card[data-container]');
 
@@ -101,7 +193,7 @@ async function fetchDockerStatus() {
       updateCardStatus(card, running ? 'online' : 'offline');
     });
 
-    // Quick-Links aktualisieren
+    // Update quick links
     document.querySelectorAll('.quick-item[data-container]').forEach(item => {
       const name = item.dataset.container;
       if (!name) return;
@@ -112,27 +204,26 @@ async function fetchDockerStatus() {
       if (dot) dot.title = running ? 'Online' : 'Offline';
     });
 
-    // Cards nach Status sortieren (online → idle → offline)
+    // Sort cards by status (online → idle → offline)
     sortCardsByStatus();
 
-    // Spotlight-Listener für neu-online-Karten registrieren
+    // Spotlight listeners for cards
     initSpotlight();
 
-    // Hero-Stats aktualisieren
     const statOnline = document.getElementById('stat-online-count');
-    if (statOnline) statOnline.textContent = `— ${onlineCount} / ${cards.length} aktiv`;
+    if (statOnline) statOnline.textContent = `— ${onlineCount} / ${cards.length} up`;
 
     const statDocker = document.getElementById('stat-docker-count');
-    if (statDocker) statDocker.textContent = `— ${containers.length} laufen`;
+    if (statDocker) statDocker.textContent = `— ${containers.length} running`;
 
   } catch (err) {
-    console.warn('[Docker API] Nicht erreichbar:', err.message);
+    console.warn('[Docker API] Unreachable:', err.message);
 
     const statOnline = document.getElementById('stat-online-count');
     if (statOnline) statOnline.textContent = '— API offline';
 
     const statDocker = document.getElementById('stat-docker-count');
-    if (statDocker) statDocker.textContent = '— nicht verbunden';
+    if (statDocker) statDocker.textContent = '— not connected';
   }
 }
 
@@ -162,7 +253,7 @@ function onCardMouseMove(e) {
 
 function initSpotlight() {
   document.querySelectorAll('.service-card').forEach(card => {
-    // Verhindert doppelte Listener bei erneutem Aufruf
+    // Avoid duplicate listeners on refresh
     if (card._spotlightBound) return;
     card._spotlightBound = true;
     card.addEventListener('mousemove', onCardMouseMove);
@@ -178,7 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('themeToggle');
   if (btn) btn.addEventListener('click', toggleTheme);
 
-  // Docker-Status sofort abrufen, danach alle 30 Sekunden
+  refreshAuthStatus();
+  setInterval(refreshAuthStatus, AUTH_POLL_MS);
+
+  // Docker status: now, then every 30s
   fetchDockerStatus();
   setInterval(fetchDockerStatus, DOCKER_POLL_INTERVAL);
 });

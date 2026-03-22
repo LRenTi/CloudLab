@@ -1,27 +1,29 @@
 /**
  * ╔══════════════════════════════════════════════════╗
- * ║          CloudLab Dashboard — Konfiguration      ║
- * ║  Hier alle Dienste, Links und Hero-Texte pflegen ║
+ * ║          CloudLab Dashboard — configuration      ║
+ * ║  Edit services, links, and hero copy here       ║
  * ╚══════════════════════════════════════════════════╝
  *
  * status:     "online" | "idle" | "offline"
- * container:  Name des Docker-Containers (für Live-Status-Abfrage)
- * icon:       beliebiges Lucide-Icon  → https://lucide.dev/icons/
+ * container:  Docker container name (for live status from the API)
+ * icon:       any Lucide icon → https://lucide.dev/icons/
+ * tag:        Short badge (role/category), e.g. "Proxy", "Auth"
+ * quicklinks: label = same idea (shown to the right of the name)
  */
 
 const DASHBOARD_CONFIG = {
 
-  /* ── Docker-API ─────────────────────────────────── */
+  /* ── Docker API ─────────────────────────────────── */
   api: {
-    // Optional: eigene URL überschreiben. null = relativer Pfad /api/containers (Standard)
+    // Optional: override URL. null = relative /api/containers
     dockerUrl: null,
   },
 
-  /* ── Hero-Bereich ──────────────────────────────── */
+  /* ── Hero ──────────────────────────────────────── */
   hero: {
-    title:    'Mein persönliches',
-    subtitle: 'CloudLab Dashboard.',
-    description: 'Zentraler Überblick über alle laufenden Dienste, Tools und Ressourcen meines CloudLabs.',
+    title:    'My personal',
+    subtitle: 'CloudLab dashboard.',
+    description: 'A single place to see services, tools, and resources running in my homelab.',
     badge:    'Self-hosted · Cloud · Docker',
     network:  '192.168.x.x',
   },
@@ -31,47 +33,56 @@ const DASHBOARD_CONFIG = {
     label: 'CloudLab Dashboard — Made with ❤ by Lorenz',
   },
 
-  /* ── Sektionen ─────────────────────────────────── */
+  /* ── Sections ─────────────────────────────────── */
   sections: [
 
-    /* ── 1. Infrastruktur (Karten) ── */
+    /* ── 1. Infrastructure (cards) ── */
     {
-      id:    'infrastruktur',
-      title: 'Infrastruktur',
+      id:    'infrastructure',
+      title: 'Infrastructure',
       type:  'cards',
       items: [
         {
           name:      'Portainer',
-          desc:      'Docker-Container verwalten, Images und Stacks übersichtlich im Browser.',
+          desc:      'Manage Docker containers, images, and stacks in the browser.',
           icon:      'layout-dashboard',
-          tag:       ':9000',
+          tag:       'Docker',
           url:       '/portainer',
           status:    'online',
           container: 'portainer',
         },
         {
           name:      'Nginx Proxy Manager',
-          desc:      'Reverse-Proxy mit SSL-Terminierung, Hosts und Weiterleitungen.',
+          desc:      'Reverse proxy with SSL termination, hosts, and forwarding rules.',
           icon:      'shield-check',
-          tag:       ':81',
-          url:       '130.61.227.197:81',           // ← direkte IP eintragen, sobald Proxy-Host gesetzt ist
+          tag:       'Proxy',
+          url:       '130.61.227.197:81',
           status:    'online',
           container: 'nginx-proxy-manager',
         },
         {
+          name:      'Authelia',
+          desc:      'Sign-in portal with 2FA (TOTP): protects services on lab.rtbg.dev — login and account settings.',
+          icon:      'key-round',
+          tag:       'Auth & 2FA',
+          url:       '/auth/',
+          status:    'offline',
+          container: 'authelia',
+        },
+        {
           name:      'Uptime Kuma',
-          desc:      'Monitoring aller Dienste mit Benachrichtigungen und Status-Seite.',
+          desc:      'Uptime monitoring with alerts and a public status page.',
           icon:      'activity',
-          tag:       ':3001',
+          tag:       'Monitoring',
           url:       '#',
           status:    'offline',
           container: 'uptime-kuma',
         },
         {
           name:      'Dashdot',
-          desc:      'Live-Systemmetriken: CPU, RAM, Festplatte und Netzwerk auf einen Blick.',
+          desc:      'Live system metrics: CPU, RAM, disk, and network at a glance.',
           icon:      'hard-drive',
-          tag:       ':3000',
+          tag:       'Metrics',
           url:       '#',
           status:    'offline',
           container: 'dashdot',
@@ -79,15 +90,15 @@ const DASHBOARD_CONFIG = {
       ],
     },
 
-    /* ── 2. Dienste (Karten) ── */
+    /* ── 2. Services (cards) ── */
     {
-      id:    'dienste',
-      title: 'Dienste',
+      id:    'services',
+      title: 'Services',
       type:  'cards',
       items: [
         {
           name:      'Nextcloud',
-          desc:      'Private Cloud für Dateien, Kalender, Kontakte und Kollaboration.',
+          desc:      'Private cloud for files, calendar, contacts, and collaboration.',
           icon:      'cloud',
           tag:       'cloud',
           url:       '#',
@@ -96,7 +107,7 @@ const DASHBOARD_CONFIG = {
         },
         {
           name:      'Gitea',
-          desc:      'Self-hosted Git-Server für Repositories, Issues und CI/CD-Pipelines.',
+          desc:      'Self-hosted Git for repositories, issues, and CI/CD.',
           icon:      'git-branch',
           tag:       'git',
           url:       '#',
@@ -105,7 +116,7 @@ const DASHBOARD_CONFIG = {
         },
         {
           name:      'Vaultwarden',
-          desc:      'Passwort-Manager kompatibel mit Bitwarden — sicher und selbst verwaltet.',
+          desc:      'Bitwarden-compatible password manager — self-hosted and secure.',
           icon:      'shield',
           tag:       'vault',
           url:       '#',
@@ -114,16 +125,16 @@ const DASHBOARD_CONFIG = {
         },
         {
           name:      'Jellyfin',
-          desc:      'Media-Server für Filme, Serien und Musik — überall streambar.',
+          desc:      'Media server for movies, shows, and music — stream anywhere.',
           icon:      'film',
-          tag:       ':8096',
+          tag:       'Streaming',
           url:       '#',
           status:    'offline',
           container: 'jellyfin',
         },
         {
           name:      'Outline',
-          desc:      'Team-Wiki und Wissensdatenbank mit sauberem Editor und Versionierung.',
+          desc:      'Team wiki and knowledge base with a clean editor and versioning.',
           icon:      'book-open',
           tag:       'wiki',
           url:       '#',
@@ -132,7 +143,7 @@ const DASHBOARD_CONFIG = {
         },
         {
           name:      'OpenClaw',
-          desc:      'Self-hosted KI-Assistent — verbindet Messaging-Apps mit KI-Modellen über 50+ Kanäle (WhatsApp, Telegram, Discord u.v.m.).',
+          desc:      'Self-hosted AI assistant — connects messaging apps to models across 50+ channels (WhatsApp, Telegram, Discord, and more).',
           icon:      'bot',
           logoUrl:   'img/openclaw-logo.svg',
           tag:       'ai',
@@ -143,23 +154,23 @@ const DASHBOARD_CONFIG = {
       ],
     },
 
-    /* ── 3. Schnellzugriff (2-spaltige Linkliste) ── */
+    /* ── 3. Quick access (two-column link list) ── */
     {
-      id:    'schnellzugriff',
-      title: 'Schnellzugriff',
+      id:    'quick-access',
+      title: 'Quick access',
       type:  'quicklinks',
       columns: [
         [
-          { name: 'Cockpit',    icon: 'terminal',    url: '#', label: ':9090',       container: 'cockpit'    },
-          { name: 'Adminer',    icon: 'database',    url: '#', label: ':8080',       container: 'adminer'    },
-          { name: 'Mailserver', icon: 'mail',        url: '#', label: 'mail.local',  container: 'mailserver' },
-          { name: 'Pi-hole',    icon: 'wifi',        url: '#', label: ':8053/admin', container: 'pihole'     },
+          { name: 'Cockpit',    icon: 'terminal',    url: '#', label: 'System',   container: 'cockpit'    },
+          { name: 'Adminer',    icon: 'database',    url: '#', label: 'SQL',        container: 'adminer'    },
+          { name: 'Mailserver', icon: 'mail',        url: '#', label: 'Mail',       container: 'mailserver' },
+          { name: 'Pi-hole',    icon: 'wifi',        url: '#', label: 'DNS',        container: 'pihole'     },
         ],
         [
-          { name: 'Prometheus', icon: 'box',         url: '#', label: ':9090',       container: 'prometheus' },
-          { name: 'Gotify',     icon: 'send',        url: '#', label: ':8070',       container: 'gotify'     },
-          { name: 'Authelia',   icon: 'key',         url: '#', label: 'auth.local',  container: 'authelia'   },
-          { name: 'Grafana',    icon: 'bar-chart-2', url: '#', label: ':3000',       container: 'grafana'    },
+          { name: 'Prometheus', icon: 'box',         url: '#', label: 'Metrics',    container: 'prometheus' },
+          { name: 'Gotify',     icon: 'send',        url: '#', label: 'Push',         container: 'gotify'     },
+          { name: 'Authelia',   icon: 'key',         url: '/auth/', label: 'Auth',      container: 'authelia'   },
+          { name: 'Grafana',    icon: 'bar-chart-2', url: '#', label: 'Charts',       container: 'grafana'    },
         ],
       ],
     },
