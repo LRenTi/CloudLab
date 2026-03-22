@@ -204,7 +204,7 @@ async function fetchDockerStatus() {
       if (dot) dot.title = running ? 'Online' : 'Offline';
     });
 
-    // Sort cards by status (online → idle → offline)
+    // Sort cards in every grid (Infrastructure, Services, …) by status, then name
     sortCardsByStatus();
 
     // Spotlight listeners for cards
@@ -230,15 +230,25 @@ async function fetchDockerStatus() {
 /* ── Sort cards by status within each grid ──────── */
 const STATUS_ORDER = { online: 0, idle: 1, offline: 2 };
 
+function cardStatusSortKey(card) {
+  const cls = Array.from(card.querySelector('.card-status')?.classList ?? [])
+    .find(c => c.startsWith('status-') && c !== 'status-label');
+  const status = cls?.replace('status-', '') ?? 'offline';
+  return STATUS_ORDER[status] ?? 2;
+}
+
 function sortCardsByStatus() {
   document.querySelectorAll('.cards-grid').forEach(grid => {
-    const cards = Array.from(grid.querySelectorAll('.service-card'));
-    cards.forEach(card => {
-      const statusClass = Array.from(card.querySelector('.card-status')?.classList ?? [])
-        .find(c => c.startsWith('status-'))
-        ?.replace('status-', '') ?? 'offline';
-      card.style.order = STATUS_ORDER[statusClass] ?? 2;
+    const cards = Array.from(grid.querySelectorAll(':scope > .service-card'));
+    cards.sort((a, b) => {
+      const da = cardStatusSortKey(a);
+      const db = cardStatusSortKey(b);
+      if (da !== db) return da - db;
+      const na = a.querySelector('.card-title')?.textContent?.trim() ?? '';
+      const nb = b.querySelector('.card-title')?.textContent?.trim() ?? '';
+      return na.localeCompare(nb, undefined, { sensitivity: 'base' });
     });
+    cards.forEach(card => grid.appendChild(card));
   });
 }
 

@@ -6,6 +6,7 @@ A static landing page for a personal homelab “playground”: link self-hosted 
 
 - **Single entry point** for your reverse proxy, auth, monitoring, apps, and quick links.
 - **Live container status** via a small Node API that reads the Docker socket (`GET /api/containers`).
+- **Card grids** (e.g. Infrastructure and Services) are sorted the same way after each poll: online → idle → offline, then alphabetically by card title within each group (DOM reorder, not only CSS `order`).
 - **One config file** (`data/services.js`): hero copy, sections, cards, Lucide icons, tags, URLs.
 
 The hero is intentionally short on the headline (**CloudLab** / **Place to experiment.**) with a longer **description** in `DASHBOARD_CONFIG.hero.description`. That block uses the full content width (not a narrow column) and supports multiple paragraphs if you use `\n\n` in the string (`white-space: pre-line`).
