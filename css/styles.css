@@ -106,7 +106,15 @@ body {
   50%       { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--green) 70%, transparent)); }
 }
 
-.nav-actions { display: flex; align-items: center; gap: .5rem; }
+/* Order in DOM: time → login → theme */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .65rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
 
 /* ── Authelia Login im Header ───────────────────── */
 .nav-auth {
@@ -115,7 +123,9 @@ body {
   gap: .5rem;
   flex-wrap: wrap;
   justify-content: flex-end;
-  max-width: min(320px, 42vw);
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: min(360px, 100%);
 }
 
 .nav-auth .auth-loading {
@@ -211,10 +221,19 @@ body {
 .btn-icon svg   { width: 15px; height: 15px; }
 
 /* ── Clock ──────────────────────────────────────── */
-#clock {
+.nav-clock {
+  display: inline-block;
   font-family: 'Geist Mono', monospace;
   font-size: 12px;
-  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  padding: .35rem .55rem;
+  min-width: 7.5ch;
+  text-align: center;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-muted);
 }
 
 /* ── Main layout ────────────────────────────────── */
@@ -566,8 +585,43 @@ body {
 .footer-text a { color: var(--text-muted); text-decoration: none; }
 .footer-text a:hover { color: var(--text); }
 
+.footer-aside {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+.footer-sep {
+  color: var(--text-subtle);
+  user-select: none;
+}
+a.footer-link {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+}
+a.footer-link:hover {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ── Responsive ─────────────────────────────────── */
 @media (max-width: 640px) {
   .hero h1    { font-size: 1.75rem; }
   .stat-group { gap: .5rem; }
+
+  .nav-inner {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 52px;
+    padding: .5rem 1rem;
+    row-gap: .5rem;
+  }
+
+  .nav-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 }

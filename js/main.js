@@ -31,12 +31,23 @@ function toggleTheme() {
 function updateClock() {
   const el = document.getElementById('clock');
   if (!el) return;
-  el.textContent = new Date().toLocaleTimeString('en-GB', {
+  const now = new Date();
+  el.textContent = now.toLocaleTimeString('en-GB', {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
+  el.setAttribute('datetime', now.toISOString());
 }
 updateClock();
 setInterval(updateClock, 1000);
+
+/* ── Footer date (markup in index.html) ──────────── */
+function updateFooterDate() {
+  const el = document.getElementById('footer-date');
+  if (!el) return;
+  el.textContent = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+}
 
 /* ── Authelia: login status + sign in from dashboard ─ */
 const AUTH_PREFIX = '/auth';
@@ -273,6 +284,7 @@ function initSpotlight() {
 /* ── Bootstrap ──────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   renderDashboard(DASHBOARD_CONFIG);
+  updateFooterDate();
 
   initSpotlight();
 

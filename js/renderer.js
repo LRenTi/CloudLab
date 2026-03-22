@@ -1,7 +1,7 @@
 /**
  * renderer.js
  * Reads DASHBOARD_CONFIG (data/services.js) and builds
- * the full page DOM — hero, cards, quicklinks, footer.
+ * the full page DOM — hero, cards, quicklinks (footer lives in index.html).
  */
 
 /* ── Status label map (UI language: English) ── */
@@ -111,17 +111,6 @@ function renderQuickSection(section) {
     <div class="row g-3">${cols}</div>`;
 }
 
-/* ── Render footer ── */
-function renderFooter(footer) {
-  const dateStr = new Date().toLocaleDateString('en-GB', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-  });
-
-  document.querySelector('.footer-inner').innerHTML = `
-    <span class="footer-text">${escHtml(footer.label)}</span>
-    <span class="footer-text">${escHtml(dateStr)}</span>`;
-}
-
 /* ── Main render entry point ── */
 function renderDashboard(config) {
   const main = document.getElementById('main-content');
@@ -136,7 +125,6 @@ function renderDashboard(config) {
   });
 
   main.innerHTML = html;
-  renderFooter(config.footer);
 
   /* Re-init Lucide after DOM injection */
   lucide.createIcons();

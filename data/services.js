@@ -29,11 +29,6 @@ const DASHBOARD_CONFIG = {
     network:  '192.168.x.x',
   },
 
-  /* ── Footer ────────────────────────────────────── */
-  footer: {
-    label: 'CloudLab Dashboard — Made with ❤ by Lorenz',
-  },
-
   /* ── Sections ─────────────────────────────────── */
   sections: [
 
