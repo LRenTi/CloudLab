@@ -48,6 +48,69 @@ The Compose service listens on port **2999** by default and needs read access to
 - **Health:** `GET /health`
 - **CORS:** `CORS_ORIGINS` env (e.g. `*` or a comma-separated list)
 
+## Authentication (Authelia)
+
+The dashboard integrates with [Authelia](https://www.authelia.com/) for SSO and two-factor authentication. Authelia runs as a **separate** Docker Compose stack (it protects the entire host, not just this dashboard), but shares the same Docker network (`npm_default`).
+
+### How the dashboard uses it
+
+- `js/main.js` polls **`/auth/api/state`** (with cookies) to show a logged-in user badge or a "Sign in" link.
+- Sign-out calls **`POST /auth/api/logout`**.
+- The auth prefix is configured as `AUTH_PREFIX = '/auth'` in `main.js`.
+
+### Nginx forward-auth setup
+
+Authelia sits behind Nginx Proxy Manager via a custom `server_proxy.conf`. The key pieces:
+
+1. **Internal authz endpoint** -- Nginx calls this on every protected request:
+
+```nginx
+location = /internal/auth/authz {
+    internal;
+    proxy_pass http://authelia:9091/api/authz/auth-request;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+    proxy_set_header X-Original-Method $request_method;
+    proxy_set_header X-Original-URL $scheme://$http_host$request_uri;
+    proxy_set_header X-Forwarded-For $remote_addr;
+}
+```
+
+2. **Public login portal** (no `auth_request`, users need to reach it):
+
+```nginx
+location /auth/ {
+    auth_request off;
+    proxy_pass http://authelia:9091;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Original-URL $scheme://$http_host$request_uri;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+3. **Protected service** -- add these three lines to any location block:
+
+```nginx
+location /some-service/ {
+    auth_request      /internal/auth/authz;
+    auth_request_set  $redirection_url $upstream_http_location;
+    error_page 401 =302 $redirection_url;
+
+    proxy_pass http://some-service:8080/;
+    # ... usual proxy headers ...
+}
+```
+
+### Deploying Authelia
+
+Authelia is **not** included in this repo's `docker-compose.yml` to keep secrets (`jwt_secret`, `session.secret`, `encryption_key`) out of a public repository. Deploy it separately:
+
+1. Create a directory with `docker-compose.yml`, `config/configuration.yml`, and `config/users_database.yml`.
+2. Join the same external network (`npm_default`).
+3. Point your Nginx custom config at the Authelia container on port `9091`.
+
+See the [Authelia docs](https://www.authelia.com/configuration/prologue/introduction/) for full configuration reference.
+
 ## Deployment notes
 
 - Serve **static files** (HTML, CSS, JS, images) with your web server or Nginx Proxy Manager.
